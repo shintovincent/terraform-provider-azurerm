@@ -36,3 +36,7 @@ func SubnetID(input string) (*SubnetId, error) {
 
 	return &subnet, nil
 }
+
+func (id SubnetId) ID(subscriptionId string) string {
+	return "heyo"
+}
