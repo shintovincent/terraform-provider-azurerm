@@ -26,6 +26,7 @@ func (r ExampleResource) Arguments() map[string]*schema.Schema {
 	}
 }
 
+// Computed Only
 func (r ExampleResource) Attributes() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"output": {
@@ -42,6 +43,7 @@ func (r ExampleResource) ResourceType() string {
 type ExampleObj struct {
 	Name   string `hcl:"name"`
 	Number int    `hcl:"number"`
+	Output string `hcl:"output" computed:"true"`
 }
 
 func (r ExampleResource) Create() ResourceFunc {
@@ -85,6 +87,7 @@ func (r ExampleResource) Read() ResourceFunc {
 	}
 }
 
+// copy pasta create
 func (r ExampleResource) Update() ResourceFunc {
 	return ResourceFunc{
 		Func: func(ctx context.Context, metadata ResourceMetaData) error {

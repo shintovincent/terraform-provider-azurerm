@@ -37,6 +37,15 @@ func (rmd ResourceMetaData) Decode(input interface{}) error {
 	objType := reflect.TypeOf(input).Elem()
 	for i := 0; i < objType.NumField(); i++ {
 		field := objType.Field(i)
+		log.Printf("[MATTHEWMATTHEW] Field", field)
+
+		if val, exists := field.Tag.Lookup("computed"); exists {
+			if val == "true" {
+				return fmt.Errorf("we made it! %+v", field)
+				//continue
+			}
+		}
+
 		if val, exists := field.Tag.Lookup("hcl"); exists {
 			hclValue := rmd.ResourceData.Get(val)
 
