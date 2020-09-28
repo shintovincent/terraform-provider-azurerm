@@ -23,6 +23,10 @@ func (r ExampleResource) Arguments() map[string]*schema.Schema {
 			Optional: true,
 			Computed: true,
 		},
+		"enabled": {
+			Type: schema.TypeBool,
+			Optional: true,
+		},
 	}
 }
 
@@ -41,12 +45,48 @@ func (r ExampleResource) ResourceType() string {
 
 // NOTE: i guess we could return schema object to ensure everything is mapped and valid idk
 type ExampleObj struct {
-	Name   string `hcl:"name"`
-	Number int    `hcl:"number"`
-	Output string `hcl:"output" computed:"true"`
+	Name    string `hcl:"name"`
+	Number  int    `hcl:"number"`
+	Output  string `hcl:"output" computed:"true"`
+	Enabled bool   `hcl:"enabled"`
 }
 
 func (r ExampleResource) Create() ResourceFunc {
+	return CreateUpdate()
+}
+
+func (r ExampleResource) Read() ResourceFunc {
+	return ResourceFunc{
+		Func: func(ctx context.Context, metadata ResourceMetaData) error {
+			return metadata.Encode(&ExampleObj{
+				Name:   "updated",
+				Number: 123,
+				Enabled: true,
+			})
+		},
+		Timeout: 5 * time.Minute,
+	}
+}
+
+// copy pasta create
+func (r ExampleResource) Update() ResourceFunc {
+	return CreateUpdate()
+}
+
+func (r ExampleResource) Delete() ResourceFunc {
+	return ResourceFunc{
+		Func: func(ctx context.Context, metadata ResourceMetaData) error {
+			return nil
+		},
+		Timeout: 5 * time.Minute,
+	}
+}
+
+func (r ExampleResource) IDValidationFunc() schema.SchemaValidateFunc {
+	return validate.SubnetID
+}
+
+func CreateUpdate() ResourceFunc {
 	return ResourceFunc{
 		Func: func(ctx context.Context, metadata ResourceMetaData) error {
 			//metadata.ResourceData
@@ -73,39 +113,4 @@ func (r ExampleResource) Create() ResourceFunc {
 		},
 		Timeout: 5 * time.Minute,
 	}
-}
-
-func (r ExampleResource) Read() ResourceFunc {
-	return ResourceFunc{
-		Func: func(ctx context.Context, metadata ResourceMetaData) error {
-			return metadata.Encode(&ExampleObj{
-				Name:   "updated",
-				Number: 123,
-			})
-		},
-		Timeout: 5 * time.Minute,
-	}
-}
-
-// copy pasta create
-func (r ExampleResource) Update() ResourceFunc {
-	return ResourceFunc{
-		Func: func(ctx context.Context, metadata ResourceMetaData) error {
-			return nil
-		},
-		Timeout: 5 * time.Minute,
-	}
-}
-
-func (r ExampleResource) Delete() ResourceFunc {
-	return ResourceFunc{
-		Func: func(ctx context.Context, metadata ResourceMetaData) error {
-			return nil
-		},
-		Timeout: 5 * time.Minute,
-	}
-}
-
-func (r ExampleResource) IDValidationFunc() schema.SchemaValidateFunc {
-	return validate.SubnetID
 }

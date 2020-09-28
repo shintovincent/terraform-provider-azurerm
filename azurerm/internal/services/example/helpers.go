@@ -41,8 +41,7 @@ func (rmd ResourceMetaData) Decode(input interface{}) error {
 
 		if val, exists := field.Tag.Lookup("computed"); exists {
 			if val == "true" {
-				return fmt.Errorf("we made it! %+v", field)
-				//continue
+				continue
 			}
 		}
 
@@ -54,6 +53,11 @@ func (rmd ResourceMetaData) Decode(input interface{}) error {
 			}
 			if v, ok := hclValue.(int); ok {
 				reflect.ValueOf(input).Elem().Field(i).SetInt(int64(v))
+			}
+			if v, ok := hclValue.(bool); ok {
+				log.Printf("[BOOL] Decode %+v", v)
+
+				reflect.ValueOf(input).Elem().Field(i).SetBool(v)
 			}
 
 			// TODO: other types
@@ -83,6 +87,13 @@ func (rmd *ResourceMetaData) Encode(input interface{}) error {
 				sv := fieldVal.String()
 				log.Printf("[TOMTOM] Setting %q to %q", hclTag, sv)
 				if err := rmd.ResourceData.Set(hclTag, sv); err != nil {
+					return err
+				}
+
+			case reflect.Bool:
+				bv := fieldVal.Bool()
+				log.Printf("[BOOL] Setting %q to %q", hclTag, bv)
+				if err := rmd.ResourceData.Set(hclTag, bv); err != nil {
 					return err
 				}
 
