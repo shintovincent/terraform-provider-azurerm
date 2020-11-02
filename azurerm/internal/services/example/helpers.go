@@ -13,6 +13,7 @@ import (
 	azSchema "github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/tf/schema"
 )
 
+
 type Logger interface {
 	Info(message string)
 	InfoF(format string, args ...interface{})
@@ -48,16 +49,54 @@ func (rmd ResourceMetaData) Decode(input interface{}) error {
 		if val, exists := field.Tag.Lookup("hcl"); exists {
 			hclValue := rmd.ResourceData.Get(val)
 
+			log.Printf("[MATTHEWMATTHEW] Input Type: ", reflect.ValueOf(input).Elem().Field(i).Type())
+
+
 			if v, ok := hclValue.(string); ok {
 				reflect.ValueOf(input).Elem().Field(i).SetString(v)
 			}
 			if v, ok := hclValue.(int); ok {
 				reflect.ValueOf(input).Elem().Field(i).SetInt(int64(v))
 			}
+
+			// Doesn't work for empty bools?
 			if v, ok := hclValue.(bool); ok {
 				log.Printf("[BOOL] Decode %+v", v)
 
 				reflect.ValueOf(input).Elem().Field(i).SetBool(v)
+			}
+
+			if v, ok := hclValue.(*schema.Set); ok {
+				switch fieldType := reflect.ValueOf(input).Elem().Field(i).Type(); fieldType {
+				// TODO do I have to do it this way for the rest of the types?
+				case reflect.TypeOf([]string{}):
+					list := v.List()
+					log.Printf("[MATTHEWMATTHEW] Sets!!: ", reflect.TypeOf([]string{}).Kind())
+					stringSlice := reflect.MakeSlice(reflect.TypeOf([]string{}), len(list), len(list))
+					for i, stringVal := range list {
+						stringSlice.Index(i).SetString(stringVal.(string))
+					}
+					log.Printf("[MATTHEWMATTHEW] Set StringSlice ", stringSlice)
+					reflect.ValueOf(input).Elem().Field(i).Set(stringSlice)
+				default:
+					return fmt.Errorf("unknown type %+v for key %q", field.Type.Kind(), fieldType)
+				}
+			}
+
+			if v, ok := hclValue.([]interface{}); ok {
+				switch fieldType := reflect.ValueOf(input).Elem().Field(i).Type(); fieldType {
+				// TODO do I have to do it this way for the rest of the types?
+				case reflect.TypeOf([]string{}):
+					log.Printf("[MATTHEWMATTHEW] Lists!: ", reflect.TypeOf([]string{}).Kind())
+					stringSlice := reflect.MakeSlice(reflect.TypeOf([]string{}), len(v), len(v))
+					for i, stringVal := range v {
+						stringSlice.Index(i).SetString(stringVal.(string))
+					}
+					log.Printf("[MATTHEWMATTHEW] List StringSlice ", stringSlice)
+					reflect.ValueOf(input).Elem().Field(i).Set(stringSlice)
+				default:
+					return fmt.Errorf("unknown type %+v for key %q", field.Type.Kind(), fieldType)
+				}
 			}
 
 			// TODO: other types
@@ -97,8 +136,19 @@ func (rmd *ResourceMetaData) Encode(input interface{}) error {
 					return err
 				}
 
+			case reflect.Slice:
+				sv := fieldVal.Slice(0, fieldVal.Len())
+				attr := make([]interface{}, sv.Len())
+				for i := 0; i < sv.Len(); i++ {
+					attr[i] = sv.Index(i).Interface()
+				}
+				log.Printf("[SLICE] Setting %q to %+v", hclTag, attr)
+				if err := rmd.ResourceData.Set(hclTag, attr); err != nil {
+					return err
+				}
 			default:
-				return fmt.Errorf("unknown type %+v for key %q", field.Type.Kind(), hclTag)
+				// TODO take this back
+				return nil // fmt.Errorf("unknown type %+v for key %q", field.Type.Kind(), hclTag)
 			}
 		}
 	}

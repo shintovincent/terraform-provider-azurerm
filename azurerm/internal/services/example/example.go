@@ -24,8 +24,34 @@ func (r ExampleResource) Arguments() map[string]*schema.Schema {
 			Computed: true,
 		},
 		"enabled": {
-			Type: schema.TypeBool,
+			Type:     schema.TypeBool,
 			Optional: true,
+		},
+		"networks": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
+		"networks_set": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
+		"list": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"name": {
+						Type:     schema.TypeString,
+						Required: true,
+					},
+				},
+			},
 		},
 	}
 }
@@ -45,10 +71,17 @@ func (r ExampleResource) ResourceType() string {
 
 // NOTE: i guess we could return schema object to ensure everything is mapped and valid idk
 type ExampleObj struct {
-	Name    string `hcl:"name"`
-	Number  int    `hcl:"number"`
-	Output  string `hcl:"output" computed:"true"`
-	Enabled bool   `hcl:"enabled"`
+	Name     string   `hcl:"name"`
+	Number   int      `hcl:"number"`
+	Output   string   `hcl:"output" computed:"true"`
+	Enabled  bool     `hcl:"enabled"`
+	Networks []string `hcl:"networks"`
+	NetworksSet []string `hcl:"networks_set"`
+	List []List `hcl:"list"`
+}
+
+type List struct {
+	Name string
 }
 
 func (r ExampleResource) Create() ResourceFunc {
@@ -59,9 +92,11 @@ func (r ExampleResource) Read() ResourceFunc {
 	return ResourceFunc{
 		Func: func(ctx context.Context, metadata ResourceMetaData) error {
 			return metadata.Encode(&ExampleObj{
-				Name:   "updated",
-				Number: 123,
+				Name:    "updated",
+				Number:  123,
 				Enabled: true,
+				Networks: []string{"123", "124"},
+				NetworksSet: []string{"asdf", "qwer"},
 			})
 		},
 		Timeout: 5 * time.Minute,
@@ -107,6 +142,8 @@ func CreateUpdate() ResourceFunc {
 
 			metadata.Logger.InfoF("Name is %s", obj.Name)
 			metadata.Logger.InfoF("Number is %d", obj.Number)
+			metadata.Logger.InfoF("Networks are %+v", obj.Networks)
+			metadata.Logger.InfoF("Networks Set is %+v", obj.NetworksSet)
 
 			metadata.SetID(id)
 			return nil
