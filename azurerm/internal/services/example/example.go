@@ -55,6 +55,35 @@ func (r ExampleResource) Arguments() map[string]*schema.Schema {
 						Type:     schema.TypeString,
 						Required: true,
 					},
+					"inner": {
+						Type:     schema.TypeList,
+						Optional: true,
+						Elem: &schema.Resource{
+							Schema: map[string]*schema.Schema{
+								"name": {
+									Type:     schema.TypeString,
+									Required: true,
+								},
+								"inner": {
+									Type:     schema.TypeList,
+									Optional: true,
+									Elem: &schema.Resource{
+										Schema: map[string]*schema.Schema{
+											"name": {
+												Type:     schema.TypeString,
+												Required: true,
+											},
+											"should_be_fine": {
+												Type:     schema.TypeBool,
+												Required: true,
+											},
+
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -91,17 +120,32 @@ func (r ExampleResource) ResourceType() string {
 type ExampleObj struct {
 	Name     string   `hcl:"name"`
 	Number   int      `hcl:"number"`
-	Output   string   `hcl:"output" computed:"true" ip_address:"true"`
+	Output   string   `hcl:"output" computed:"true"`
 	Enabled  bool     `hcl:"enabled"`
 	Networks []string `hcl:"networks"`
 	NetworksSet []string `hcl:"networks_set"`
 	List []NetworkList `hcl:"list"`
-	Set []NetworkList `hcl:"set"`
+	Set []NetworkSet `hcl:"set"`
 	Float float64 `hcl:"float"`
 }
 
 type NetworkList struct {
 	Name string `hcl:"name"`
+	Inner []NetworkInner `hcl:"inner"`
+}
+
+type NetworkSet struct {
+	Name string `hcl:"name"`
+}
+
+type NetworkInner struct {
+	Name string `hcl:"name"`
+	Inner []InnerInner `hcl:"inner"`
+}
+
+type InnerInner struct {
+	Name string `hcl:"name"`
+	ShouldBeFine bool `hcl:"should_be_fine"`
 }
 
 func (r ExampleResource) Create() ResourceFunc {
@@ -119,8 +163,26 @@ func (r ExampleResource) Read() ResourceFunc {
 				NetworksSet: []string{"asdf", "qwer"},
 				List: []NetworkList{{
 					Name: "test1232",
+					Inner: []NetworkInner{{
+						Name: "oiadsjfgoijs",
+						Inner: []InnerInner{
+							{
+								Name: "sure why not",
+								ShouldBeFine: true,
+							},
+							{
+								Name: "sure why not",
+								ShouldBeFine: true,
+							},
+							{
+								Name: "sure why not",
+								ShouldBeFine: true,
+							},
+						},
+					},
+					},
 				}},
-				Set: []NetworkList{{
+				Set: []NetworkSet{{
 					Name: "set1232",
 				}},
 				Float: float64(123),
