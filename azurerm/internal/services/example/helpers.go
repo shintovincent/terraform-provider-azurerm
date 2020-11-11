@@ -54,86 +54,13 @@ func (rmd ResourceMetaData) Decode(input interface{}) error {
 			//TODO Actually check error
 			setValue(input, hclValue, field, i)
 
-/*
-			if v, ok := hclValue.(string); ok {
-				reflect.ValueOf(input).Elem().Field(i).SetString(v)
-				continue
-			}
-			if v, ok := hclValue.(int); ok {
-				reflect.ValueOf(input).Elem().Field(i).SetInt(int64(v))
-				continue
-			}
-
-			// Doesn't work for empty bools?
-			if v, ok := hclValue.(bool); ok {
-				log.Print("[BOOL] Decode %+v", v)
-
-				reflect.ValueOf(input).Elem().Field(i).SetBool(v)
-				continue
-			}
-
-			if v, ok := hclValue.(*schema.Set); ok {
-				switch fieldType := reflect.ValueOf(input).Elem().Field(i).Type(); fieldType {
-				// TODO do I have to do it this way for the rest of the types?
-				case reflect.TypeOf([]string{}):
-					list := v.List()
-					log.Print("[MATTHEWMATTHEW] Sets!!: ", reflect.TypeOf([]string{}).Kind())
-					stringSlice := reflect.MakeSlice(reflect.TypeOf([]string{}), len(list), len(list))
-					for j, stringVal := range list {
-						stringSlice.Index(j).SetString(stringVal.(string))
-					}
-					log.Print("[MATTHEWMATTHEW] Set StringSlice ", stringSlice)
-					reflect.ValueOf(input).Elem().Field(i).Set(stringSlice)
-					continue
-				default:
-					return fmt.Errorf("unknown type %+v for key %q", field.Type.Kind(), fieldType)
-				}
-			}
-
-			if v, ok := hclValue.([]interface{}); ok {
-				switch fieldType := reflect.ValueOf(input).Elem().Field(i).Type(); fieldType {
-				// TODO do I have to do it this way for the rest of the types?
-				case reflect.TypeOf([]string{}):
-					log.Print("[MATTHEWMATTHEW] Lists!: ", reflect.TypeOf([]string{}).Kind())
-					stringSlice := reflect.MakeSlice(reflect.TypeOf([]string{}), len(v), len(v))
-					for i, stringVal := range v {
-						stringSlice.Index(i).SetString(stringVal.(string))
-					}
-					log.Print("[MATTHEWMATTHEW] List StringSlice ", stringSlice)
-					reflect.ValueOf(input).Elem().Field(i).Set(stringSlice)
-					continue
-				default:
-					//  []example.NetworkList
-					arrayList := reflect.New(fieldType.Elem())
-					log.Print("[MATTHEWMATTHEW] List", arrayList.Interface())
-					// log.Print("[MATTHEWMATTHEW] Info ", reflect.TypeOf(obj).Elem().NumField())
-
-					elem := reflect.New(fieldType.Elem())
-					log.Print("[MATTHEWMATTHEW] element ", elem.Interface())
-
-					for j := 0; j < elem.Type().Elem().NumField(); j ++ {
-						log.Print("[MATTHEWMATTHEW] nestedField ", elem.Type().Elem().Field(j).Name)
-						log.Print("[MATTHEWMATTHEW] nestedFieldType ", elem.Type().Elem().Field(j).Type)
-					}
-
-
-						}
-					}
-
-
-					// field, ok := reflect.TypeOf(fieldType).Elem().FieldByName("name")
-
-					return fmt.Errorf("unknown type %+v for key %q", field.Type.Kind(), fieldType)
-				}
-			} */
-
 			// TODO: other types
 		}
 	}
 	return nil
 }
 
-func setValue(input, hclValue interface{}, field reflect.StructField, index int) error{
+func setValue(input, hclValue interface{}, field reflect.StructField, index int) error {
 	if v, ok := hclValue.(string); ok {
 		log.Printf("[String] Decode %+v", v)
 		log.Printf("Input %+v", reflect.ValueOf(input))
@@ -163,10 +90,13 @@ func setValue(input, hclValue interface{}, field reflect.StructField, index int)
 	}
 
 	if v, ok := hclValue.(*schema.Set); ok {
+		list := v.List()
+		setListValue(input, index, list)
+
+		/*
 		switch fieldType := reflect.ValueOf(input).Elem().Field(index).Type(); fieldType {
 		// TODO do I have to do it this way for the rest of the types?
 		case reflect.TypeOf([]string{}):
-			list := v.List()
 			log.Print("[MATTHEWMATTHEW] Sets!!: ", reflect.TypeOf([]string{}).Kind())
 			stringSlice := reflect.MakeSlice(reflect.TypeOf([]string{}), len(list), len(list))
 			for j, stringVal := range list {
@@ -176,7 +106,6 @@ func setValue(input, hclValue interface{}, field reflect.StructField, index int)
 			reflect.ValueOf(input).Elem().Field(index).Set(stringSlice)
 			return nil
 		default:
-			list := v.List()
 			arrayList := reflect.New(reflect.ValueOf(input).Elem().Field(index).Type())
 			log.Print("[MATTHEWMATTHEW] List Type", arrayList.Type())
 
@@ -209,89 +138,72 @@ func setValue(input, hclValue interface{}, field reflect.StructField, index int)
 			reflect.ValueOf(input).Elem().Field(index).Set(arrayList)
 
 			return fmt.Errorf("unknown type %+v for key %q", field.Type.Kind(), fieldType)
-		}
+		}*/
 	}
 
 	if v, ok := hclValue.([]interface{}); ok {
-		switch fieldType := reflect.ValueOf(input).Elem().Field(index).Type(); fieldType {
-		// TODO do I have to do it this way for the rest of the types?
-		case reflect.TypeOf([]string{}):
-			log.Print("[MATTHEWMATTHEW] Lists!: ", reflect.TypeOf([]string{}).Kind())
-			stringSlice := reflect.MakeSlice(reflect.TypeOf([]string{}), len(v), len(v))
-			for i, stringVal := range v {
-				stringSlice.Index(i).SetString(stringVal.(string))
-			}
-			log.Print("[MATTHEWMATTHEW] List StringSlice ", stringSlice)
-			reflect.ValueOf(input).Elem().Field(index).Set(stringSlice)
-			return nil
-		default:
-			valueToSet := reflect.New(reflect.ValueOf(input).Elem().Field(index).Type())
-			log.Print("[MATTHEWMATTHEW] List Type", valueToSet.Type())
-
-			for _, mapVal := range v {
-				if test, ok := mapVal.(map[string]interface{}); ok && test != nil {
-					elem := reflect.New(fieldType.Elem())
-					log.Print("[MATTHEWMATTHEW] element ", elem)
-					for j := 0; j < elem.Type().Elem().NumField(); j++ {
-						nestedField := elem.Type().Elem().Field(j)
-						log.Print("[MATTHEWMATTHEW] nestedField ", nestedField)
-						if val, exists := nestedField.Tag.Lookup("computed"); exists {
-							if val == "true" {
-								continue
-							}
-						}
-
-						if val, exists := nestedField.Tag.Lookup("hcl"); exists {
-							nestedHCLValue := test[val]
-							log.Print("[MATTHEWMATTHEW] HCLValue: ", nestedHCLValue)
-							setValue(elem.Interface(), nestedHCLValue, nestedField, j)
-						}
-					}
-					log.Print("value to set type before changes", valueToSet.Type())
-
-					if !valueToSet.CanSet() {
-						log.Print("list can set before", valueToSet.CanSet())
-						valueToSet = valueToSet.Elem()
-						log.Print("list can set after", valueToSet.CanSet())
-					}
-
-					if !elem.CanSet() {
-						log.Print("elem can set before", elem.CanSet())
-						elem = elem.Elem()
-						log.Print("elem can set after", elem.CanSet())
-					}
-
-					valueToSet = reflect.Append(valueToSet, elem)
-				}
-			}
-			log.Print("[List] Setting list: ", valueToSet)
-			log.Print("[Field] Setting field type: ", reflect.ValueOf(input).Elem().Field(index).Type())
-			fieldToSet := reflect.ValueOf(input).Elem().Field(index)
-			log.Print("[tomtest] field to set type: ", fieldToSet.Type())
-			log.Print("[tomtest] value to set type: ", valueToSet.Type())
-
-			log.Print("[tomtest] valueOf: ", reflect.ValueOf(valueToSet))
-			//kind := arrayList.Kind()
-			//if kind == reflect.Ptr {
-			//	value := reflect.ValueOf(arrayList)
-			log.Print("[tomtest] valuetoSet kind: ", valueToSet.Kind())
-			if valueToSet.Kind() == reflect.Ptr {
-				log.Print("[tomtest] value to set before: ", valueToSet)
-				log.Print("[tomtest] value to set type: ", valueToSet.Type())
-				valueToSet = valueToSet.Elem()
-				log.Print("[tomtest] value to set after: ", valueToSet)
-				log.Print("[tomtest] value to set type: ", valueToSet.Type())
-			}
-			fieldToSet.Set(valueToSet)
-			//} else {
-			//	tomTest.Set(arrayList)
-			//}
-			return fmt.Errorf("unknown type %+v for key %q", field.Type.Kind(), fieldType)
-		}
+		setListValue(input, index, v)
 	}
 
 
 	return nil
+}
+
+func setListValue(input interface{}, index int, v []interface{}) {
+	switch fieldType := reflect.ValueOf(input).Elem().Field(index).Type(); fieldType {
+	// TODO do I have to do it this way for the rest of the types?
+	case reflect.TypeOf([]string{}):
+		log.Print("[MATTHEWMATTHEW] Lists!: ", reflect.TypeOf([]string{}).Kind())
+		stringSlice := reflect.MakeSlice(reflect.TypeOf([]string{}), len(v), len(v))
+		for i, stringVal := range v {
+			stringSlice.Index(i).SetString(stringVal.(string))
+		}
+		log.Print("[MATTHEWMATTHEW] List StringSlice ", stringSlice)
+		reflect.ValueOf(input).Elem().Field(index).Set(stringSlice)
+	default:
+		valueToSet := reflect.New(reflect.ValueOf(input).Elem().Field(index).Type())
+		log.Print("[MATTHEWMATTHEW] List Type", valueToSet.Type())
+
+		for _, mapVal := range v {
+			if test, ok := mapVal.(map[string]interface{}); ok && test != nil {
+				elem := reflect.New(fieldType.Elem())
+				log.Print("[MATTHEWMATTHEW] element ", elem)
+				for j := 0; j < elem.Type().Elem().NumField(); j++ {
+					nestedField := elem.Type().Elem().Field(j)
+					log.Print("[MATTHEWMATTHEW] nestedField ", nestedField)
+					if val, exists := nestedField.Tag.Lookup("computed"); exists {
+						if val == "true" {
+							continue
+						}
+					}
+
+					if val, exists := nestedField.Tag.Lookup("hcl"); exists {
+						nestedHCLValue := test[val]
+						setValue(elem.Interface(), nestedHCLValue, nestedField, j)
+					}
+				}
+
+				if !elem.CanSet() {
+					elem = elem.Elem()
+				}
+
+				if valueToSet.Kind() == reflect.Ptr {
+					valueToSet.Elem().Set(reflect.Append(valueToSet.Elem(), elem))
+				} else {
+					valueToSet = reflect.Append(valueToSet, elem)
+				}
+
+				log.Print("value to set type after changes", valueToSet.Type())
+			}
+		}
+		fieldToSet := reflect.ValueOf(input).Elem().Field(index)
+
+		if valueToSet.Kind() != reflect.Ptr {
+			fieldToSet.Set(valueToSet)
+		} else {
+			fieldToSet.Set(valueToSet.Elem())
+		}
+	}
 }
 
 func (rmd *ResourceMetaData) Encode(input interface{}) error {
