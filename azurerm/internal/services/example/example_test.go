@@ -1,6 +1,8 @@
 package example
 
 import (
+	"github.com/google/go-cmp/cmp"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"reflect"
 	"testing"
 )
@@ -101,6 +103,51 @@ func TestDecode(t *testing.T) {
 			},
 			ExpectError: false,
 		},
+		{
+			Name: "top level - everything",
+			Input: map[string]interface{}{
+				"name": "bingo bango",
+				"float": 123.4,
+				"number": 123,
+				"enabled": false,
+				"networks": []interface{}{"network1", "network2", "network3"},
+				"networks_set": []interface{}{"networkset1", "networkset2", "networkset3"},
+				"list": []interface{}{
+					map[string]interface{}{
+						"name": "first",
+						"inner": []interface{}{
+							map[string]interface{}{
+								"name": "get-a-mac",
+							},
+						},
+					},
+				},
+				"set": schema.NewSet(FakeHashSchema(),
+					[]interface{}{
+						map[string]interface{}{
+							"name": "setname",
+						},
+					}),
+			},
+			Expected: &ExampleObj{
+				Name: "bingo bango",
+				Float: 123.4,
+				Number: 123,
+				Enabled: false,
+				Networks: []string{"network1", "network2", "network3"},
+				NetworksSet: []string{"networkset1", "networkset2", "networkset3"},
+				List: []NetworkList{{
+					Name: "first",
+					Inner: []NetworkInner{{
+						Name: "get-a-mac",
+					}},
+				}},
+				Set: []NetworkSet{{
+					Name: "setname",
+				}},
+			},
+			ExpectError: false,
+		},
 	}
 
 
@@ -110,6 +157,175 @@ func TestDecode(t *testing.T) {
 		
 		if !reflect.DeepEqual(obj, v.Expected) {
 			t.Fatalf("ExampleObj mismatch\n\n Expected: %+v\n\n Received %+v\n\n", v.Expected, obj)
+		}
+	}
+}
+
+func TestEncode(t *testing.T) {
+	testCases := []struct{
+		Name string
+		Input *ExampleObj
+		Expected map[string]interface{}
+		ExpectError bool
+	}{
+		{
+			Name: "top level - name",
+			Input: &ExampleObj{
+				Name: "bingo bango",
+			},
+			Expected: map[string]interface{}{
+				"name": "bingo bango",
+				"enabled": false,
+				"float": float64(0),
+				"list": []interface{}{},
+				"networks": []string(nil),
+				"networks_set": []string(nil),
+				"number": int64(0),
+				"output": "",
+				"set": []interface{}{},
+			},
+			ExpectError: false,
+		},
+		{
+			Name: "top level - everything",
+			Input: &ExampleObj{
+				Name: "bingo bango",
+				Float: 123.4,
+				Number: 123,
+				Enabled: false,
+			},
+			Expected: map[string]interface{}{
+				"name": "bingo bango",
+				"enabled": false,
+				"float": 123.4,
+				"list": []interface{}{},
+				"networks": []string(nil),
+				"networks_set": []string(nil),
+				"number": int64(123),
+				"output": "",
+				"set": []interface{}{},
+			},
+			ExpectError: false,
+		},
+		{
+			Name: "top level - list",
+			Input: &ExampleObj{
+				Name: "bingo bango",
+				Float: 123.4,
+				Number: 123,
+				Enabled: false,
+				List: []NetworkList{{
+					Name: "first",
+				}},
+			},
+			Expected: map[string]interface{}{
+				"name": "bingo bango",
+				"enabled": false,
+				"float": 123.4,
+				"list": []interface{}{
+					&map[string]interface{}{
+						"name": "first",
+						"inner": []interface{}{},
+					},
+				},
+				"networks": []string(nil),
+				"networks_set": []string(nil),
+				"number": int64(123),
+				"output": "",
+				"set": []interface{}{},
+			},
+			ExpectError: false,
+		},
+		{
+			Name: "top level - list in lists",
+			Input: &ExampleObj{
+				Name: "bingo bango",
+				Float: 123.4,
+				Number: 123,
+				Enabled: false,
+				List: []NetworkList{{
+					Name: "first",
+					Inner: []NetworkInner{{
+						Name: "get-a-mac",
+					}},
+				}},
+			},
+			Expected: map[string]interface{}{
+				"name": "bingo bango",
+				"enabled": false,
+				"float": 123.4,
+				"list": []interface{}{
+					&map[string]interface{}{
+						"name": "first",
+						"inner": []interface{}{
+							&map[string]interface{}{
+								"name": "get-a-mac",
+								"inner": []interface{}{},
+								"set": []interface{}{},
+							},
+						},
+					},
+				},
+				"networks": []string(nil),
+				"networks_set": []string(nil),
+				"number": int64(123),
+				"output": "",
+				"set": []interface{}{},
+			},
+			ExpectError: false,
+		},
+		{
+			Name: "top level - everything",
+			Input: &ExampleObj{
+				Name: "bingo bango",
+				Float: 123.4,
+				Number: 123,
+				Enabled: false,
+				Networks: []string{"network1", "network2", "network3"},
+				NetworksSet: []string{"networkset1", "networkset2", "networkset3"},
+				List: []NetworkList{{
+					Name: "first",
+					Inner: []NetworkInner{{
+						Name: "get-a-mac",
+					}},
+				}},
+				Set: []NetworkSet{{
+					Name: "setname",
+				}},
+			},
+			Expected: map[string]interface{}{
+				"name": "bingo bango",
+				"enabled": false,
+				"float": 123.4,
+				"list": []interface{}{
+					&map[string]interface{}{
+						"name": "first",
+						"inner": []interface{}{
+							&map[string]interface{}{
+								"name": "get-a-mac",
+								"inner": []interface{}{},
+								"set": []interface{}{},
+							},
+						},
+					},
+				},
+				"networks": []string(nil),
+				"networks_set": []string(nil),
+				"number": int64(123),
+				"output": "",
+				"set": []interface{}{},
+			},
+			ExpectError: false,
+		},
+	}
+	for _, v := range testCases {
+		output, err := encodeHelper(v.Input)
+		if err != nil {
+			t.Fatalf("encoding error: %+v", err)
+		}
+
+		if !cmp.Equal(output, v.Expected) {
+			t.Fatalf("output mismatch\n\n Expected: %+v\n\n Received: %+v\n\n", v.Expected, output)
 		}
 	}
 }
@@ -258,5 +474,23 @@ func decodeHelper(input interface{}, config map[string]interface{}) {
 			//TODO Actually check error
 			setValue(input, hclValue, field, i)
 		}
+	}
+}
+
+func encodeHelper(input interface{}) (map[string]interface{}, error) {
+	objType := reflect.TypeOf(input).Elem()
+	objVal := reflect.ValueOf(input).Elem()
+
+	serialized,err := recurse(objType, objVal)
+	if err != nil {
+		return nil, err
+	}
+	return *serialized, nil
+}
+
+// FakeHashSchema is a dummy method to return a fake hash so we can build a Set for testing purposes.
+func FakeHashSchema() schema.SchemaSetFunc {
+	return func(v interface{}) int {
+		return 0
 	}
 }
