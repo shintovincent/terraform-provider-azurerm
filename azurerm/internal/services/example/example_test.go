@@ -148,6 +148,105 @@ func TestDecode(t *testing.T) {
 			},
 			ExpectError: false,
 		},
+		{
+			Name: "nests",
+			Input: map[string]interface{}{
+				"name": "bingo bango",
+				"float": 123.4,
+				"number": 123,
+				"enabled": false,
+				"networks": []interface{}{"network1", "network2", "network3"},
+				"networks_set": []interface{}{"networkset1", "networkset2", "networkset3"},
+				"list": []interface{}{
+					map[string]interface{}{
+						"name": "first",
+						"inner": []interface{}{
+							map[string]interface{}{
+								"name": "get-a-mac",
+								"inner": []interface{}{
+									map[string]interface{}{
+										"name": "innerinner",
+										"should_be_fine": true,
+									},
+								},
+								"set": schema.NewSet(FakeHashSchema(),
+									[]interface{}{
+										map[string]interface{}{
+											"name": "nestedsetname",
+										},
+									}),
+							},
+						},
+					},
+					map[string]interface{}{
+						"name": "second",
+						"inner": []interface{}{
+							map[string]interface{}{
+								"name": "get-a-mac2",
+								"inner": []interface{}{
+									map[string]interface{}{
+										"name": "innerinner2",
+										"should_be_fine": true,
+									},
+								},
+								"set": schema.NewSet(FakeHashSchema(),
+									[]interface{}{
+										map[string]interface{}{
+											"name": "nestedsetname2",
+										},
+									}),
+							},
+						},
+					},
+				},
+				"set": schema.NewSet(FakeHashSchema(),
+					[]interface{}{
+						map[string]interface{}{
+							"name": "setname",
+						},
+					}),
+			},
+			Expected: &ExampleObj{
+				Name: "bingo bango",
+				Float: 123.4,
+				Number: 123,
+				Enabled: false,
+				Networks: []string{"network1", "network2", "network3"},
+				NetworksSet: []string{"networkset1", "networkset2", "networkset3"},
+				List: []NetworkList{
+					{
+						Name: "first",
+						Inner: []NetworkInner{{
+							Name: "get-a-mac",
+							Inner: []InnerInner{{
+								Name: "innerinner",
+								ShouldBeFine: true,
+							}},
+							Set: []NetworkListSet{{
+								Name: "nestedsetname",
+							}},
+						}},
+					},
+					{
+						Name: "second",
+						Inner: []NetworkInner{{
+							Name: "get-a-mac2",
+							Inner: []InnerInner{{
+								Name: "innerinner2",
+								ShouldBeFine: true,
+							}},
+							Set: []NetworkListSet{{
+								Name: "nestedsetname2",
+							}},
+						}},
+					},
+				},
+				Set: []NetworkSet{{
+					Name: "setname",
+				}},
+			},
+			ExpectError: false,
+		},
 	}
 
 
@@ -309,11 +408,113 @@ func TestEncode(t *testing.T) {
 						},
 					},
 				},
+				"networks": []string{"network1", "network2", "network3"},
+				"networks_set": []string{"networkset1", "networkset2", "networkset3"},
+				"number": int64(123),
+				"output": "",
+				"set": []interface{}{
+					&map[string]interface{}{
+						"name": "setname",
+						"inner": []interface{}{},
+					},
+				},
+			},
+			ExpectError: false,
+		},
+		{
+			Name: "nests",
+			Input: &ExampleObj{
+				Name:        "bingo bango",
+				Float:       123.4,
+				Number:      123,
+				Enabled:     false,
+				List: []NetworkList{
+					{
+						Name: "first",
+						Inner: []NetworkInner{{
+							Name: "get-a-mac",
+							Inner: []InnerInner{{
+								Name:         "innerinner",
+								ShouldBeFine: true,
+							}},
+							Set: []NetworkListSet{{
+								Name: "nestedsetname",
+							}},
+						}},
+					},
+					{
+						Name: "second",
+						Inner: []NetworkInner{{
+							Name: "get-a-mac2",
+							Inner: []InnerInner{{
+								Name:         "innerinner2",
+								ShouldBeFine: true,
+							}},
+							Set: []NetworkListSet{{
+								Name: "nestedsetname2",
+							}},
+						}},
+					},
+				},
+				Set: []NetworkSet{{
+					Name: "setname",
+				}},
+			},
+			Expected: map[string]interface{}{
+				"name": "bingo bango",
+				"enabled": false,
+				"float": 123.4,
+				"list": []interface{}{
+					&map[string]interface{}{
+						"name": "first",
+						"inner": []interface{}{
+							&map[string]interface{}{
+								"name": "get-a-mac",
+								"inner": []interface{}{
+									&map[string]interface{}{
+										"name": "innerinner",
+										"should_be_fine": true,
+									},
+								},
+								"set": []interface{}{
+									&map[string]interface{}{
+										"name": "nestedsetname",
+									},
+								},
+							},
+						},
+					},
+					&map[string]interface{}{
+						"name": "second",
+						"inner": []interface{}{
+							&map[string]interface{}{
+								"name": "get-a-mac2",
+								"inner": []interface{}{
+									&map[string]interface{}{
+										"name": "innerinner2",
+										"should_be_fine": true,
+									},
+								},
+								"set": []interface{}{
+									&map[string]interface{}{
+										"name": "nestedsetname2",
+									},
+								},
+							},
+						},
+					},
+				},
+
 				"networks": []string(nil),
 				"networks_set": []string(nil),
 				"number": int64(123),
 				"output": "",
-				"set": []interface{}{},
+				"set": []interface{}{
+					&map[string]interface{}{
+						"name": "setname",
+						"inner": []interface{}{},
+					},
+				},
 			},
 			ExpectError: false,
 		},
@@ -325,137 +526,10 @@ func TestEncode(t *testing.T) {
 		}
 
 		if !cmp.Equal(output, v.Expected) {
-			t.Fatalf("output mismatch\n\n Expected: %+v\n\n Received: %+v\n\n", v.Expected, output)
+			t.Fatalf("Test Failed %q: output mismatch\n\n Expected: %+v\n\n Received: %+v\n\n", v.Name, v.Expected, output)
 		}
 	}
 }
-
-func TestAccAzureRMExample_single(t *testing.T) {
-	input := &ExampleObj{}
-	valueToSet := map[string]interface{} {
-		"name": "bingo bango",
-		"list": []interface{}{
-			map[string]interface{}{
-				"name": "first",
-				"inner": []interface{}{
-					map[string]interface{}{
-						"name": "get-a-mac",
-					},
-				},
-			},
-		},
-	}
-
-	decodeHelper(input, valueToSet)
-	if input.Name == valueToSet["name"] {
-		t.Errorf("name does not match: Expected: %q Received: %q", valueToSet["name"], input.Name)
-	}
-}
-
-func TestAccAzureRMExample_two(t *testing.T) {
-	input := &ExampleObj{
-	}
-	valueToSet := []interface{}{
-		map[string]interface{}{
-			"name": "first",
-			"inner": []interface{}{
-				map[string]interface{}{
-					"name": "get-a-mac",
-				},
-			},
-		},
-		map[string]interface{}{
-			"name": "second",
-		},
-	}
-
-	objType := reflect.TypeOf(input).Elem()
-	for i := 0; i < objType.NumField(); i++ {
-		field := objType.Field(i)
-		if field.Name == "List" {
-			setValue(input, valueToSet, field, i)
-		}
-	}
-}
-
-func TestAccAzureRMExample_three(t *testing.T) {
-	input := &ExampleObj{
-	}
-	valueToSet := []interface{}{
-		map[string]interface{}{
-			"name": "first",
-			"inner": []interface{}{
-				map[string]interface{}{
-					"name": "get-a-mac",
-				},
-			},
-		},
-		map[string]interface{}{
-			"name": "second",
-		},
-		map[string]interface{}{
-			"name": "third",
-		},
-	}
-
-	objType := reflect.TypeOf(input).Elem()
-	for i := 0; i < objType.NumField(); i++ {
-		field := objType.Field(i)
-		if field.Name != "List" {
-			setValue(input, valueToSet, field, i)
-		}
-	}
-}
-
-func TestAccAzureRMExample_listInList(t *testing.T) {
-	input := &ExampleObj{
-	}
-	valueToSet := []interface{}{
-		map[string]interface{}{
-			"name": "first",
-			"inner": []interface{}{
-				map[string]interface{}{
-					"name": "get-a-mac",
-					"inner": []interface{}{
-						map[string]interface{}{
-							"name": "get-a-mac",
-							"inner": []interface{}{
-								map[string]interface{}{
-									"name": "get-a-mac",
-									"should_be_fine": true,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	objType := reflect.TypeOf(input).Elem()
-	for i := 0; i < objType.NumField(); i++ {
-		field := objType.Field(i)
-		if field.Name == "List" {
-			setValue(input, valueToSet, field, i)
-		}
-	}
-}
-
-
-type TopLevelString struct {
-	Hello string `hcl:"hello"`
-}
-
-
-/*
-func TestEncodeMissingTags(t *testing.T) {
-	// top level of each type
-	// nested of each type
-	// nested of nested
-	// one 5 nested deep
-}
-
-*/
 
 func decodeHelper(input interface{}, config map[string]interface{}) {
 	objType := reflect.TypeOf(input).Elem()
