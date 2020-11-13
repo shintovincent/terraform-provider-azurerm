@@ -112,6 +112,16 @@ func setListValue(input interface{}, index int, v []interface{}) {
 		}
 		log.Print("[MATTHEWMATTHEW] List StringSlice ", stringSlice)
 		reflect.ValueOf(input).Elem().Field(index).Set(stringSlice)
+
+	case reflect.TypeOf([]int{}):
+		log.Print("[MATTHEWMATTHEW] Lists!: ", reflect.TypeOf([]int{}).Kind())
+		iSlice := reflect.MakeSlice(reflect.TypeOf([]int{}), len(v), len(v))
+		for i, iVal := range v {
+			iSlice.Index(i).SetInt(int64(iVal.(int)))
+		}
+		log.Print("[MATTHEWMATTHEW] List StringSlice ", iSlice)
+		reflect.ValueOf(input).Elem().Field(index).Set(iSlice)
+
 	default:
 		valueToSet := reflect.New(reflect.ValueOf(input).Elem().Field(index).Type())
 		log.Print("[MATTHEWMATTHEW] List Type", valueToSet.Type())
@@ -210,6 +220,10 @@ func recurse(objType reflect.Type, objVal reflect.Value) (*map[string]interface{
 				attr := make([]interface{}, sv.Len())
 				switch sv.Type() {
 				case reflect.TypeOf([]string{}):
+					log.Printf("[SLICE] Setting %q to %q", hclTag, sv)
+					output[hclTag] = sv.Interface()
+
+				case reflect.TypeOf([]int{}):
 					log.Printf("[SLICE] Setting %q to %q", hclTag, sv)
 					output[hclTag] = sv.Interface()
 

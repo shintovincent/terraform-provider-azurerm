@@ -21,7 +21,7 @@ func TestDecode(t *testing.T) {
 		Expected *ExampleObj
 		ExpectError bool
 	}{
-		{
+		/*{
 			Name: "top level - name",
 			Input: map[string]interface{}{
 				"name": "bingo bango",
@@ -247,12 +247,26 @@ func TestDecode(t *testing.T) {
 			},
 			ExpectError: false,
 		},
+		*/{
+			Name: "top level - int lists/sets",
+			Input: map[string]interface{}{
+				"int_list": []int{1,2,3},
+				"int_set": []int{3,4,5},
+			},
+			Expected: &ExampleObj{
+				IntList: []int{1,2,3},
+				IntSet: []int{1,2,3},
+			},
+			ExpectError: false,
+		},
 	}
 
 
 	for _, v := range testCases {
 		obj := &ExampleObj{}
-		decodeHelper(obj, v.Input)
+		if err := decodeHelper(obj, v.Input); err != nil && !v.ExpectError {
+			t.Fatalf("error decoding into obj: %+v", err)
+		}
 		
 		if !reflect.DeepEqual(obj, v.Expected) {
 			t.Fatalf("ExampleObj mismatch\n\n Expected: %+v\n\n Received %+v\n\n", v.Expected, obj)
@@ -531,7 +545,7 @@ func TestEncode(t *testing.T) {
 	}
 }
 
-func decodeHelper(input interface{}, config map[string]interface{}) {
+func decodeHelper(input interface{}, config map[string]interface{}) error {
 	objType := reflect.TypeOf(input).Elem()
 	for i := 0; i < objType.NumField(); i++ {
 		field := objType.Field(i)
@@ -546,9 +560,12 @@ func decodeHelper(input interface{}, config map[string]interface{}) {
 			hclValue := config[val]
 
 			//TODO Actually check error
-			setValue(input, hclValue, field, i)
+			if err := setValue(input, hclValue, field, i); err != nil {
+				return err
+			}
 		}
 	}
+	return nil
 }
 
 func encodeHelper(input interface{}) (map[string]interface{}, error) {

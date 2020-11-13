@@ -41,6 +41,20 @@ func (r ExampleResource) Arguments() map[string]*schema.Schema {
 				Type: schema.TypeString,
 			},
 		},
+		"int_list": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeInt,
+			},
+		},
+		"int_set": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeInt,
+			},
+		},
 		"float": {
 			Type: schema.TypeFloat,
 			Optional: true,
@@ -154,6 +168,8 @@ type ExampleObj struct {
 	Enabled  bool     `hcl:"enabled"`
 	Networks []string `hcl:"networks"`
 	NetworksSet []string `hcl:"networks_set"`
+	IntList []int `hcl:"int_list"`
+	IntSet []int `hcl:"int_set"`
 	List []NetworkList `hcl:"list"`
 	Set []NetworkSet `hcl:"set"`
 	Float float64 `hcl:"float"`
@@ -197,6 +213,8 @@ func (r ExampleResource) Read() ResourceFunc {
 				Enabled: true,
 				Networks: []string{"123", "124"},
 				NetworksSet: []string{"asdf", "qwer"},
+				IntList: []int{1,2,3},
+				IntSet: []int{3,4,5},
 				List: []NetworkList{{
 					Name: "test1232",
 					Inner: []NetworkInner{
