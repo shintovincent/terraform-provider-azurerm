@@ -59,6 +59,41 @@ func (r ExampleResource) Arguments() map[string]*schema.Schema {
 			Type: schema.TypeFloat,
 			Optional: true,
 		},
+		"float_list": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeFloat,
+			},
+		},
+		"float_set": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeFloat,
+			},
+		},
+		"bool_list": {
+			Type:     schema.TypeList,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeBool,
+			},
+		},
+		"bool_set": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeBool,
+			},
+		},
+		"map": {
+			Type: schema.TypeMap,
+			Optional: true,
+			Elem: &schema.Schema{
+				Type: schema.TypeString,
+			},
+		},
 		"list": {
 			Type:     schema.TypeList,
 			Optional: true,
@@ -170,9 +205,14 @@ type ExampleObj struct {
 	NetworksSet []string `hcl:"networks_set"`
 	IntList []int `hcl:"int_list"`
 	IntSet []int `hcl:"int_set"`
+	FloatList []float64 `hcl:"float_list"`
+	FloatSet []float64 `hcl:"float_set"`
+	BoolList []bool `hcl:"bool_list"`
+	BoolSet []bool `hcl:"bool_set"`
 	List []NetworkList `hcl:"list"`
 	Set []NetworkSet `hcl:"set"`
 	Float float64 `hcl:"float"`
+	Map map[string]string `hcl:"map"`
 }
 
 type NetworkList struct {

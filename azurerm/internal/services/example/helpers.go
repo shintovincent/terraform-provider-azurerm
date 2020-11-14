@@ -51,7 +51,7 @@ func (rmd ResourceMetaData) Decode(input interface{}) error {
 			log.Print("[MATTHEWMATTHEW] HCLValue: ", hclValue)
 			log.Print("[MATTHEWMATTHEW] Input Type: ", reflect.ValueOf(input).Elem().Field(i).Type())
 
-			if err := setValue(input, hclValue, field, i); err != nil {
+			if err := setValue(input, hclValue, i); err != nil {
 				return err
 			}
 		}
@@ -59,7 +59,7 @@ func (rmd ResourceMetaData) Decode(input interface{}) error {
 	return nil
 }
 
-func setValue(input, hclValue interface{}, field reflect.StructField, index int) error {
+func setValue(input, hclValue interface{}, index int) error {
 	if v, ok := hclValue.(string); ok {
 		log.Printf("[String] Decode %+v", v)
 		log.Printf("Input %+v", reflect.ValueOf(input))
@@ -93,34 +93,55 @@ func setValue(input, hclValue interface{}, field reflect.StructField, index int)
 		return nil
 	}
 
+	if mapConfig, ok := hclValue.(map[string]interface{}); ok {
+
+		mapOutput := reflect.MakeMap(reflect.TypeOf(map[string]string{}))
+		for key, val := range mapConfig {
+			mapOutput.SetMapIndex(reflect.ValueOf(key), reflect.ValueOf(val))
+		}
+
+		reflect.ValueOf(input).Elem().Field(index).Set(mapOutput)
+		return nil
+	}
+
 	if v, ok := hclValue.([]interface{}); ok {
 		setListValue(input, index, v)
 		return nil
 	}
 
-	return fmt.Errorf("unknown type %+v for key %q",reflect.TypeOf(hclValue), hclValue )
+	return nil
 }
 
 func setListValue(input interface{}, index int, v []interface{}) {
 	switch fieldType := reflect.ValueOf(input).Elem().Field(index).Type(); fieldType {
 	// TODO do I have to do it this way for the rest of the types?
 	case reflect.TypeOf([]string{}):
-		log.Print("[MATTHEWMATTHEW] Lists!: ", reflect.TypeOf([]string{}).Kind())
 		stringSlice := reflect.MakeSlice(reflect.TypeOf([]string{}), len(v), len(v))
 		for i, stringVal := range v {
 			stringSlice.Index(i).SetString(stringVal.(string))
 		}
-		log.Print("[MATTHEWMATTHEW] List StringSlice ", stringSlice)
 		reflect.ValueOf(input).Elem().Field(index).Set(stringSlice)
 
 	case reflect.TypeOf([]int{}):
-		log.Print("[MATTHEWMATTHEW] Lists!: ", reflect.TypeOf([]int{}).Kind())
 		iSlice := reflect.MakeSlice(reflect.TypeOf([]int{}), len(v), len(v))
 		for i, iVal := range v {
 			iSlice.Index(i).SetInt(int64(iVal.(int)))
 		}
-		log.Print("[MATTHEWMATTHEW] List StringSlice ", iSlice)
 		reflect.ValueOf(input).Elem().Field(index).Set(iSlice)
+
+	case reflect.TypeOf([]float64{}):
+		fSlice := reflect.MakeSlice(reflect.TypeOf([]float64{}), len(v), len(v))
+		for i, fVal := range v {
+			fSlice.Index(i).SetFloat(fVal.(float64))
+		}
+		reflect.ValueOf(input).Elem().Field(index).Set(fSlice)
+
+	case reflect.TypeOf([]bool{}):
+		bSlice := reflect.MakeSlice(reflect.TypeOf([]bool{}), len(v), len(v))
+		for i, bVal := range v {
+			bSlice.Index(i).SetBool(bVal.(bool))
+		}
+		reflect.ValueOf(input).Elem().Field(index).Set(bSlice)
 
 	default:
 		valueToSet := reflect.New(reflect.ValueOf(input).Elem().Field(index).Type())
@@ -141,7 +162,7 @@ func setListValue(input interface{}, index int, v []interface{}) {
 
 					if val, exists := nestedField.Tag.Lookup("hcl"); exists {
 						nestedHCLValue := test[val]
-						setValue(elem.Interface(), nestedHCLValue, nestedField, j)
+						setValue(elem.Interface(), nestedHCLValue, j)
 					}
 				}
 
@@ -191,7 +212,6 @@ func recurse(objType reflect.Type, objVal reflect.Value) (*map[string]interface{
 		field := objType.Field(i)
 		fieldVal := objVal.Field(i)
 		if hclTag, exists := field.Tag.Lookup("hcl"); exists {
-			// TODO: make this better
 			switch field.Type.Kind() {
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 				iv := fieldVal.Int()
@@ -215,15 +235,19 @@ func recurse(objType reflect.Type, objVal reflect.Value) (*map[string]interface{
 				log.Printf("[BOOL] Setting %q to %t", hclTag, bv)
 				output[hclTag] = bv
 
+			case reflect.Map:
+				iter := fieldVal.MapRange()
+				attr := make(map[string]interface{})
+				for iter.Next() {
+					attr[iter.Key().String()] = iter.Value().Interface()
+				}
+				output[hclTag] = attr
+
 			case reflect.Slice:
 				sv := fieldVal.Slice(0, fieldVal.Len())
 				attr := make([]interface{}, sv.Len())
 				switch sv.Type() {
-				case reflect.TypeOf([]string{}):
-					log.Printf("[SLICE] Setting %q to %q", hclTag, sv)
-					output[hclTag] = sv.Interface()
-
-				case reflect.TypeOf([]int{}):
+				case reflect.TypeOf([]string{}), reflect.TypeOf([]int{}), reflect.TypeOf([]float64{}), reflect.TypeOf([]bool{}):
 					log.Printf("[SLICE] Setting %q to %q", hclTag, sv)
 					output[hclTag] = sv.Interface()
 
