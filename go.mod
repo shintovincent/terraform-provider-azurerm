@@ -27,3 +27,5 @@ require (
 )
 
 go 1.13
+
+replace github.com/Azure/azure-sdk-for-go => github.com/shintovincent/azure-sdk-for-go master
