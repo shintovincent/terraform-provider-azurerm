@@ -27,3 +27,7 @@ require (
 )
 
 go 1.13
+
+replace github.com/Azure/azure-sdk-for-go => github.com/shintovincent/azure-sdk-for-go v48.2.1-0.20201118221019-9219492ce4fb+incompatible
+
+replace github.com/terraform-providers/terraform-provider-azurerm => github.com/shintovincent/terraform-provider-azurerm v1.44.1-0.20201114013634-0cca34430354

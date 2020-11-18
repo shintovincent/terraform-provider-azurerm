@@ -5,6 +5,7 @@ import (
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/analysisservices"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/apimanagement"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appconfiguration"
+	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appconfigurationkv"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/applicationinsights"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/appplatform"
 	"github.com/terraform-providers/terraform-provider-azurerm/azurerm/internal/services/attestation"
@@ -93,6 +94,7 @@ func SupportedServices() []common.ServiceRegistration {
 		analysisservices.Registration{},
 		apimanagement.Registration{},
 		appconfiguration.Registration{},
+		appconfigurationkv.Registration{},
 		appplatform.Registration{},
 		applicationinsights.Registration{},
 		attestation.Registration{},

@@ -251,6 +251,13 @@ github.com/satori/uuid v0.0.0-20160927100844-b061729afc07/go.mod h1:B8HLsPLik/YN
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=
 github.com/sergi/go-diff v1.1.0 h1:we8PVUC3FE2uYfodKH/nBHMSetSfHDR6scGdBi+erh0=
 github.com/sergi/go-diff v1.1.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
+github.com/shintovincent/azure-sdk-for-go v0.2.0-beta h1:doVrEUW6Xfx7ZKj2RKALCTEiWoAMT10TGApFANlZcB8=
+github.com/shintovincent/azure-sdk-for-go v48.2.0+incompatible h1:Q+0ZJnot/7KGy155Ev3QNkjNyWB08qIH9kwTDY04o5U=
+github.com/shintovincent/azure-sdk-for-go v48.2.0+incompatible/go.mod h1:WnhpDrZxgtYFCy4GuxAY+GDzqE5hRyGU2rEs4LrRW9s=
+github.com/shintovincent/azure-sdk-for-go v48.2.1-0.20201117092749-0f8b8c0a90ef+incompatible h1:KNCp8aHo4+iQHjtMYydtNiIYv/TZoLr+QgJDjiZ/CcQ=
+github.com/shintovincent/azure-sdk-for-go v48.2.1-0.20201117092749-0f8b8c0a90ef+incompatible/go.mod h1:WnhpDrZxgtYFCy4GuxAY+GDzqE5hRyGU2rEs4LrRW9s=
+github.com/shintovincent/azure-sdk-for-go v48.2.1-0.20201118221019-9219492ce4fb+incompatible h1:xLcbwlIOMHTPNy5m+zkm+mAoN1IigfpbOxnVYWm64aU=
+github.com/shintovincent/azure-sdk-for-go v48.2.1-0.20201118221019-9219492ce4fb+incompatible/go.mod h1:WnhpDrZxgtYFCy4GuxAY+GDzqE5hRyGU2rEs4LrRW9s=
 github.com/spf13/afero v1.2.2 h1:5jhuqJyZCZf2JRofRvN/nIFgIWNzPa3/Vz8mYylgbWc=
 github.com/spf13/afero v1.2.2/go.mod h1:9ZxEEn6pIJ8Rxe320qSDBk6AsU0r9pR7Q4OcevTdifk=
 github.com/spf13/pflag v1.0.2/go.mod h1:DYY7MBk1bdzusC3SYhjObp+wFpr4gzcvqqNjLnInEg4=
