@@ -61,7 +61,7 @@ func resourceArmAppConfigurationKv() *schema.Resource {
 			"label": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: false,
+				ForceNew: true,
 			},
 
 			// the API changed and now returns the rg in lowercase
